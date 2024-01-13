@@ -1,0 +1,102 @@
+---- Update JVM in weblogic
+Download JDK tar(archive) file, unzip , and create a symbolic link--ln -sf---symbolic link will save the hasstle to replace java path in each and every script or file.
+Copy fies cacerts, java.security, java.policy from old version to new one in /security folder.
+Edit JAVA_HOME into nodemanager.properties.
+Edit JAVA_HOME into setDomainEnv.sh
+Edit JAVA_HOME into setNMJavaHome.sh
+export AVA_HOME ENV variable.
+
+use below scripts to find java in all files,
+
+find . -type f -name “*.sh” -exec grep -il JAVA_HOME {} \;
+find . -type f -name “*.sh” -exec grep -il /usr/java/jdk1.8.0_112 {} \;
+find . -type f -name “*.” -exec grep -il /usr/java/jdk1.8.0_112 {} \;
+find . -type f -exec grep -il /usr/java/jdk1.8.0_112 {} \;
+find . -type f -exec sed -i ‘s/ jdk1.8.0_112/ jdk1.8.0_121/g’ {} +
+
+
+
+--- Reset Admin password for weblogic
+Shut down the WebLogic domain.
+
+$ $DOMAIN_HOME/bin/stopWebLogic.sh
+
+Rename the data folder.
+
+$ mv $DOMAIN_HOME/servers/AdminServer/data $DOMAIN_HOME/servers/AdminServer/data-old
+
+Set the environment variables.
+
+$ . $DOMAIN_HOME/bin/setDomainEnv.sh
+
+Reset the password using the following command. Remember to substitute the appropriate username and password.
+
+$ cd $DOMAIN_HOME/security
+$ java weblogic.security.utils.AdminAccount <username> <password> .
+
+Update the "$DOMAIN_HOME/servers/AdminServer/security/boot.properties" file with the new username and password. The file format is shown below.
+
+username=<username>
+password=<password>
+
+tart the WebLogic domain.
+
+$ $DOMAIN_HOME/bin/startWebLogic.sh
+
+
+---------
+
+
+-----increase heap space
+
+setDomainEnv-- make changes
+ 
+#In case of Admin Server
+
+if [ "${SERVER_NAME}" == "AdminServer" ] ; then
+USER_MEM_ARGS="-Xms1024m -Xmx1024m -XX:MaxPermSize=512m"
+export USER_MEM_ARGS
+fi
+
+#In case of osb_server1 Server
+
+if [ "${SERVER_NAME}" == "osb_server1" ] ; then
+USER_MEM_ARGS="-Xms512m -Xmx4096m -XX:MaxPermSize=4096m"
+export USER_MEM_ARGS
+fi
+
+take headp dump and analyse using java visual vm or eclipse ide.
+
+
+COnfigure External LDAP--OID--Oracle Internet Directory
+
+Get below OID details from OID administrator--
+OID host -- hostname or IP
+OID port -- port number
+OID User-- -principle-- cn=orcleadmin, cn=Users, dc=us, dc=oracle, dc=com
+OID credentials--password
+User Base: --User Base DN -- 
+Group Base: -- Group Base DN ---
+
+Create a new authenticator provider in security realm --admin console--providers tab
+Name--OID Provider
+---OID Provider settings- configuration--provider specific--Enter above details taken from OID administrator--
+
+Restart weblogic domain--admin and mamanged instances
+
+Once restarted all OID users will be replicated in security realm- 	my realm--users and groups tab in admin console
+
+WebLogic Patching---Opatch utility
+--download patches in patch folder, unzip the patch.
+--got to specfic patch folder, run $ORACLE_HOME/opatch# ./opatch apply-- import JAVA_HOME and WL_HOME before applying the patch
+./opatch version
+./opatch --help
+./opatch lsinventory
+./opatch rollback -id 20255924
+./opatch nrollback -id --used for multiple patches
+./opatch apply -report
+
+
+
+
+
